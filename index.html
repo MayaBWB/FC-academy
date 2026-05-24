@@ -97,6 +97,33 @@
         }
       };
 
+      const sendToGoogleSheets = async (moduleId, score, moduleName) => {
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxls-dqkS6rjT5iR1Pwbt2z-50_CU--NmNB3J5RVhNVSE2pQ-fQcnxJrSlVpUy-vP08Q/exec';
+        
+        const data = {
+          timestamp: new Date().toISOString(),
+          naam: userName,
+          module: moduleName,
+          moduleId: moduleId,
+          score: score,
+          voltooiingDatum: new Date().toLocaleDateString('nl-NL')
+        };
+
+        try {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+          });
+          console.log('Resultaten verzonden naar Google Sheets');
+        } catch (error) {
+          console.error('Fout bij verzenden naar Google Sheets:', error);
+        }
+      };
+
       const modules = [
         {
           id: 1,
@@ -135,7 +162,7 @@ Actie bij SOS: meld dit aan de supervisor via Teams. De supervisor stuurt door n
           quiz: {
             questions: [
               { q: "Wat is de memo regel?", options: ["Altijd naar Planning", "Vóór installatie → Planning, Ná installatie → Storing", "Altijd naar Storing", "Alleen bij urgente zaken"], correct: 1 },
-              { q: "Wanneer is een melding SOS?", options: ["Als de klant boos is", "Als klant al 2-3x belde voor hetzelfde of het 2-3 weken aansleept", "Als het technisch complex is", "Als het een nieuwe klant is"], correct: 1 },
+              { q: "Wanneer is een melding SOS?", options: ["Als de klant boos is", "Als de klant al 2-3x belde voor hetzelfde probleem", "Als het technisch complex is", "Als het een nieuwe klant is"], correct: 1 },
               { q: "Wat doe je bij een SOS situatie?", options: ["Direct naar Sam/Leandro", "Melden aan supervisor via Teams, supervisor stuurt door naar Leandro/Sam", "Zelf oplossen", "Afspraak inplannen"], correct: 1 }
             ]
           }
@@ -151,6 +178,8 @@ Alles vertrekt vanuit één Relatie in Blox. Die Relatie wordt aangemaakt zodra 
 
 STRUCTUUR IN BLOX
 Onder één Relatie hangen alle Projecten en Werkbonnen van deze klant.
+
+⚠️ LET OP: Sommige klanten staan helaas dubbel in het systeem. Dit zorgt soms voor verwarring en is eigenlijk niet de bedoeling. Let hier op - als je een werkbon niet terug vindt, kan het in een andere relatie van diezelfde klant terecht zijn gekomen.
 
 VOORBEELD:
 Iemand koopt eerst zonnepanelen en anderhalf jaar later een airco:
@@ -217,11 +246,10 @@ De batterijen die FavorCool plaatst hebben AI-sturing:
 1. OPENING
 - Begroeting + naam + FavorCool
 - "Waarmee kan ik u helpen?"
-- Laat klant het verhaal doen zonder onderbreking
+- Laat klant het verhaal doen
 
 2. LUISTEREN & EMPATHIE
 - Toon begrip: "Ik begrijp dat dit vervelend is"
-- Onderbreek de klant niet
 - Noteer belangrijke details in Blox
 
 3. DE JUISTE VRAGEN STELLEN
@@ -240,7 +268,7 @@ De batterijen die FavorCool plaatst hebben AI-sturing:
 - Geef heldere verwachtingen
 
 OMGAAN MET BOZE KLANTEN:
-1. LUISTER zonder te onderbreken
+1. LUISTER
 2. ERKEN de frustratie: "Ik begrijp dat dit heel vervelend voor u is"
 3. NEEM HET NIET PERSOONLIJK
 4. ZOEK OPLOSSING, geen schuld
@@ -264,7 +292,7 @@ Zinnen om te VERMIJDEN:
         {
           id: 5,
           title: "Overzicht per Calltype",
-          duration: "50 min",
+          duration: "15 min",
           topics: ["Type 1: Offline", "Type 2: Klein technisch", "Type 3: Ernstig", "Klacht"],
           content: `TYPE 1 – OFFLINE / APP PROBLEEM
 Actie: SERVICE WIFI BON aanmaken
@@ -304,7 +332,7 @@ Tag: Sanne`,
         {
           id: 6,
           title: "Blox Procedures",
-          duration: "30 min",
+          duration: "15 min",
           topics: ["Klant opzoeken", "Memo aanmaken", "Documentatie"],
           content: `WERKEN MET BLOX
 
@@ -346,7 +374,7 @@ DON'T:
         {
           id: 7,
           title: "AC Storing Procedure",
-          duration: "20 min",
+          duration: "15 min",
           topics: ["Website intake", "Bon in Blox", "Prioriteit", "Taggen"],
           content: `AC STORING PROCEDURE
 
@@ -390,6 +418,7 @@ TAG DE JUISTE DIENST:
         const score = Math.round((correct / module.quiz.questions.length) * 100);
         
         if (score >= 70) {
+          sendToGoogleSheets(moduleId, score, module.title);
           completeModule(moduleId);
         } else {
           alert(`Je hebt ${score}% correct. Je hebt minimaal 70% nodig. Probeer het nog eens!`);
